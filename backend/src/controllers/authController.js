@@ -1,46 +1,98 @@
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const Otp = require("../models/Otp");
+const generateOtp = require("../utils/generateOtp");
 
-// Register
-const register = async (req, res) => {
+// ================= SEND OTP =================
+const sendOtp = async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
-    // Check empty fields
     if (!username || !email || !password) {
       return res.status(400).json({
         message: "All fields are required",
       });
     }
 
-    // Check if email exists
-    const existingEmail = await User.findOne({ email });
+    const existingUser = await User.findOne({
+      $or: [{ email }, { username }],
+    });
 
-    if (existingEmail) {
+    if (existingUser) {
       return res.status(400).json({
-        message: "Email already exists",
+        message: "Email or username already exists",
       });
     }
 
-    // Check if username exists
-    const existingUsername = await User.findOne({ username });
+    // Delete old OTP if exists
+    await Otp.deleteMany({ email });
 
-    if (existingUsername) {
+    const otp = generateOtp();
+
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+    await Otp.create({
+      email,
+      otp,
+      expiresAt,
+    });
+
+    // Development only
+    res.status(200).json({
+      message: "OTP generated successfully",
+      otp,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+// ================= REGISTER =================
+const register = async (req, res) => {
+  try {
+    const { username, email, password, otp } = req.body;
+
+    if (!username || !email || !password || !otp) {
       return res.status(400).json({
-        message: "Username already taken",
+        message: "All fields are required",
       });
     }
 
-    // Hash password
+    const otpData = await Otp.findOne({ email });
+
+    if (!otpData) {
+      return res.status(400).json({
+        message: "OTP not found",
+      });
+    }
+
+    if (otpData.expiresAt < new Date()) {
+      await Otp.deleteOne({ _id: otpData._id });
+
+      return res.status(400).json({
+        message: "OTP expired",
+      });
+    }
+
+    if (otpData.otp !== otp) {
+      return res.status(400).json({
+        message: "Invalid OTP",
+      });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
     const user = await User.create({
       username,
       email,
       password: hashedPassword,
+      isVerified: true,
     });
+
+    await Otp.deleteOne({ _id: otpData._id });
 
     res.status(201).json({
       message: "Registration Successful",
@@ -57,7 +109,7 @@ const register = async (req, res) => {
   }
 };
 
-// Login 
+// ================= LOGIN =================
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -110,7 +162,7 @@ const login = async (req, res) => {
   }
 };
 
-// Get current user
+// ================= GET CURRENT USER =================
 const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
@@ -124,6 +176,7 @@ const getMe = async (req, res) => {
 };
 
 module.exports = {
+  sendOtp,
   register,
   login,
   getMe,

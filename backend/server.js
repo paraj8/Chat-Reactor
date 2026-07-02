@@ -6,6 +6,9 @@ const authRoutes = require("./src/routes/authRoutes");
 
 dotenv.config();
 
+console.log("EMAIL_USER:", process.env.EMAIL_USER);
+console.log("EMAIL_PASS:", process.env.EMAIL_PASS ? "Loaded" : "Missing");
+
 connectDB();
 
 const app = express();
