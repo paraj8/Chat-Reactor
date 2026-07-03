@@ -11,7 +11,10 @@ import {
 import CustomInput from "../components/CustomInput";
 import CustomButton from "../components/CustomButton";
 import { login } from "../services/authService";
-import { saveToken } from "../utils/storage";
+import {
+  saveToken,
+  saveUser,
+} from "../utils/storage";
 import { COLORS } from "../utils/constants";
 
 export default function LoginScreen({ navigation }) {
@@ -19,28 +22,53 @@ export default function LoginScreen({ navigation }) {
   const [password, setPassword] = useState("");
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      return Alert.alert("Error", "Please fill all fields.");
-    }
+  if (!email || !password) {
+    return Alert.alert("Error", "Please fill all fields.");
+  }
 
-    try {
-      const res = await login({
-        email,
-        password,
-      });
+  try {
+    const res = await login({
+      email,
+      password,
+    });
 
-      await saveToken(res.data.token);
+    console.log("✅ Login Response:");
+    console.log(res.data);
 
-      Alert.alert("Success", "Login Successful!");
+    await saveToken(res.data.token);
+    await saveUser(res.data.user);
 
-      navigation.replace("Users");
-    } catch (error) {
+    Alert.alert("Success", "Login Successful!");
+
+    navigation.replace("Users");
+  } catch (error) {
+    console.log("❌ LOGIN ERROR");
+
+    if (error.response) {
+      console.log("Status:", error.response.status);
+      console.log("Response:", error.response.data);
+
       Alert.alert(
         "Error",
-        error.response?.data?.message || "Login failed"
+        error.response.data.message || "Login failed"
+      );
+    } else if (error.request) {
+      console.log("Request:", error.request);
+
+      Alert.alert(
+        "Network Error",
+        "Could not connect to the server."
+      );
+    } else {
+      console.log("Message:", error.message);
+
+      Alert.alert(
+        "Error",
+        error.message
       );
     }
-  };
+  }
+};
 
   return (
     <View style={styles.container}>

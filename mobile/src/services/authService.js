@@ -1,4 +1,7 @@
 import API from "../api/api";
+import api from "./api";
+
+
 
 export const sendOtp = (data) => {
   return API.post("/auth/send-otp", data);
@@ -18,4 +21,8 @@ export const getMe = (token) => {
       Authorization: `Bearer ${token}`,
     },
   });
+};
+
+export const getUsers = () => {
+  return api.get("/users");
 };

@@ -10,4 +10,23 @@ export const getToken = async () => {
 
 export const removeToken = async () => {
   await AsyncStorage.removeItem("token");
+  await AsyncStorage.removeItem("user");
+};
+
+// User
+export const saveUser = async (user) => {
+  await AsyncStorage.setItem(
+    "user",
+    JSON.stringify(user)
+  );
+};
+
+export const getUser = async () => {
+  const user = await AsyncStorage.getItem("user");
+
+  return user ? JSON.parse(user) : null;
+};
+
+export const removeUser = async () => {
+  await AsyncStorage.removeItem("user");
 };
