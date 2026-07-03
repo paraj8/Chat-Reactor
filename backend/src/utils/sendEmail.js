@@ -48,7 +48,7 @@ background:linear-gradient(135deg,#7C3AED,#8B5CF6);
 font-size:50px;
 margin-bottom:14px;
 ">
-💬
+♻
 </div>
 
 <h1 style="
