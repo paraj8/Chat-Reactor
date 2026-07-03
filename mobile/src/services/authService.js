@@ -1,26 +1,19 @@
-import API from "../api/api";
 import api from "./api";
 
-
-
 export const sendOtp = (data) => {
-  return API.post("/auth/send-otp", data);
+  return api.post("/auth/send-otp", data);
 };
 
 export const register = (data) => {
-  return API.post("/auth/register", data);
+  return api.post("/auth/register", data);
 };
 
 export const login = (data) => {
-  return API.post("/auth/login", data);
+  return api.post("/auth/login", data);
 };
 
-export const getMe = (token) => {
-  return API.get("/auth/me", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+export const getMe = () => {
+  return api.get("/auth/me");
 };
 
 export const getUsers = () => {

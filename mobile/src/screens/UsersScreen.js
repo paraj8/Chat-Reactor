@@ -1,3 +1,4 @@
+import { removeToken } from "../utils/storage";
 import { useEffect, useState } from "react";
 import {
   View,
@@ -10,6 +11,11 @@ import {
 import { getUsers } from "../services/userService";
 import UserCard from "../components/UserCard";
 import { COLORS } from "../utils/constants";
+
+const handleLogout = async () => {
+  await removeToken();
+  navigation.replace("Login");
+};
 
 export default function UsersScreen({ navigation }) {
   const [users, setUsers] = useState([]);
@@ -52,8 +58,21 @@ export default function UsersScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
+
+      <TouchableOpacity onPress={handleLogout}>
+  <Text style={{ color: "red", marginBottom: 10 }}>
+    Logout
+  </Text>
+</TouchableOpacity>
+
       <Text style={styles.title}>Chats</Text>
 
+      {!loading && users.length === 0 && (
+        <Text style={{ color: "#999", textAlign: "center", marginTop: 20 }}>
+          No users found
+        </Text>
+      )}
+      
       <FlatList
         data={users}
         keyExtractor={(item) => item._id}
