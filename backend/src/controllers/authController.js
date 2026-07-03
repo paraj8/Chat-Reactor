@@ -2,7 +2,9 @@ const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const Otp = require("../models/Otp");
+
 const generateOtp = require("../utils/generateOtp");
+const sendEmail = require("../utils/sendEmail");
 
 // ================= SEND OTP =================
 const sendOtp = async (req, res) => {
@@ -15,6 +17,7 @@ const sendOtp = async (req, res) => {
       });
     }
 
+    // Check if username or email already exists
     const existingUser = await User.findOne({
       $or: [{ email }, { username }],
     });
@@ -25,25 +28,41 @@ const sendOtp = async (req, res) => {
       });
     }
 
-    // Delete old OTP if exists
+    // Delete old OTP
     await Otp.deleteMany({ email });
 
+    // Generate new OTP
     const otp = generateOtp();
 
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
+    // Save OTP
     await Otp.create({
       email,
       otp,
       expiresAt,
     });
 
-    // Development only
-    res.status(200).json({
-      message: "OTP generated successfully",
-      otp,
-    });
+    // Send OTP Email
+    try {
+      await sendEmail(email, otp);
+
+      return res.status(200).json({
+        message: "OTP sent successfully",
+      });
+    } catch (err) {
+      console.error("❌ EMAIL ERROR");
+      console.error(err);
+
+      return res.status(500).json({
+        message: "Failed to send OTP email",
+        error: err.message,
+      });
+    }
   } catch (error) {
+    console.error("❌ SEND OTP ERROR");
+    console.error(error);
+
     res.status(500).json({
       message: error.message,
     });
@@ -83,6 +102,17 @@ const register = async (req, res) => {
       });
     }
 
+    // Double check user doesn't already exist
+    const existingUser = await User.findOne({
+      $or: [{ email }, { username }],
+    });
+
+    if (existingUser) {
+      return res.status(400).json({
+        message: "Email or username already exists",
+      });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
@@ -92,6 +122,7 @@ const register = async (req, res) => {
       isVerified: true,
     });
 
+    // Delete OTP after successful registration
     await Otp.deleteOne({ _id: otpData._id });
 
     res.status(201).json({
@@ -103,6 +134,8 @@ const register = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error(error);
+
     res.status(500).json({
       message: error.message,
     });
@@ -128,7 +161,10 @@ const login = async (req, res) => {
       });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(
+      password,
+      user.password
+    );
 
     if (!isMatch) {
       return res.status(400).json({
@@ -156,6 +192,8 @@ const login = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error(error);
+
     res.status(500).json({
       message: error.message,
     });
@@ -165,10 +203,14 @@ const login = async (req, res) => {
 // ================= GET CURRENT USER =================
 const getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("-password");
+    const user = await User.findById(req.user.id).select(
+      "-password"
+    );
 
     res.status(200).json(user);
   } catch (error) {
+    console.error(error);
+
     res.status(500).json({
       message: error.message,
     });
@@ -178,6 +220,6 @@ const getMe = async (req, res) => {
 module.exports = {
   sendOtp,
   register,
-  login,
+ login,
   getMe,
 };

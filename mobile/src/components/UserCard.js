@@ -1,19 +1,40 @@
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../utils/constants";
 
-export default function UserCard({ user, onPress }) {
+export default function UserCard({
+  user,
+  onPress,
+  isOnline,
+}) {
   return (
     <TouchableOpacity
       style={styles.card}
       onPress={onPress}
-      activeOpacity={0.8}
+      activeOpacity={0.85}
     >
       <View style={styles.avatar}>
         <Ionicons
           name="person"
           size={26}
           color="#fff"
+        />
+
+        {/* Online Indicator */}
+        <View
+          style={[
+            styles.statusDot,
+            {
+              backgroundColor: isOnline
+                ? "#22C55E"
+                : "#6B7280",
+            },
+          ]}
         />
       </View>
 
@@ -24,6 +45,19 @@ export default function UserCard({ user, onPress }) {
 
         <Text style={styles.email}>
           {user.email}
+        </Text>
+
+        <Text
+          style={[
+            styles.status,
+            {
+              color: isOnline
+                ? "#22C55E"
+                : COLORS.textSecondary,
+            },
+          ]}
+        >
+          {isOnline ? "Online" : "Offline"}
         </Text>
       </View>
 
@@ -53,6 +87,18 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     justifyContent: "center",
     alignItems: "center",
+    position: "relative",
+  },
+
+  statusDot: {
+    position: "absolute",
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 2,
+    borderColor: COLORS.card,
+    bottom: 0,
+    right: 0,
   },
 
   info: {
@@ -68,7 +114,13 @@ const styles = StyleSheet.create({
 
   email: {
     color: COLORS.textSecondary,
-    marginTop: 3,
+    marginTop: 2,
     fontSize: 13,
+  },
+
+  status: {
+    marginTop: 4,
+    fontSize: 12,
+    fontWeight: "600",
   },
 });

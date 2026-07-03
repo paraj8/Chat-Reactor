@@ -11,6 +11,7 @@ import {
 import CustomInput from "../components/CustomInput";
 import CustomButton from "../components/CustomButton";
 import { login } from "../services/authService";
+import { connectSocket } from "../services/socketService";
 import {
   saveToken,
   saveUser,
@@ -21,7 +22,7 @@ export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = async () => {
+const handleLogin = async () => {
   if (!email || !password) {
     return Alert.alert("Error", "Please fill all fields.");
   }
@@ -37,6 +38,9 @@ export default function LoginScreen({ navigation }) {
 
     await saveToken(res.data.token);
     await saveUser(res.data.user);
+
+    // Connect Socket.IO
+    connectSocket(res.data.user.id);
 
     Alert.alert("Success", "Login Successful!");
 
@@ -62,14 +66,10 @@ export default function LoginScreen({ navigation }) {
     } else {
       console.log("Message:", error.message);
 
-      Alert.alert(
-        "Error",
-        error.message
-      );
+      Alert.alert("Error", error.message);
     }
   }
 };
-
   return (
     <View style={styles.container}>
       <StatusBar

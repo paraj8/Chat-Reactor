@@ -1,7 +1,10 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
+
+dotenv.config();
 const http = require("http");
+
 
 const connectDB = require("./src/config/db");
 
@@ -11,9 +14,10 @@ const messageRoutes = require("./src/routes/messageRoutes");
 
 const { initSocket } = require("./src/services/socketService");
 
-dotenv.config();
+
 
 console.log("EMAIL_USER:", process.env.EMAIL_USER);
+console.log("EMAIL_PASS length:", process.env.EMAIL_PASS?.length);
 console.log(
   "EMAIL_PASS:",
   process.env.EMAIL_PASS ? "Loaded" : "Missing"

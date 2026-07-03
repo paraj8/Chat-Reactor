@@ -1,9 +1,16 @@
 import { useState } from "react";
-import { View, Text, StyleSheet, Alert } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Alert,
+  StatusBar,
+} from "react-native";
 
 import CustomInput from "../components/CustomInput";
 import CustomButton from "../components/CustomButton";
 import { register } from "../services/authService";
+import { COLORS } from "../utils/constants";
 
 export default function OtpScreen({ navigation, route }) {
   const [otp, setOtp] = useState("");
@@ -36,27 +43,39 @@ export default function OtpScreen({ navigation, route }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Verify OTP</Text>
-
-      <Text style={styles.subtitle}>
-        Enter the OTP generated for
-      </Text>
-
-      <Text style={styles.email}>
-        {email}
-      </Text>
-
-      <CustomInput
-        placeholder="6-digit OTP"
-        keyboardType="number-pad"
-        value={otp}
-        onChangeText={setOtp}
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor={COLORS.background}
       />
 
-      <CustomButton
-        title="Verify & Register"
-        onPress={handleVerifyOtp}
-      />
+      <View style={styles.card}>
+        <Text style={styles.logo}>🔐</Text>
+
+        <Text style={styles.title}>Verify OTP</Text>
+
+        <Text style={styles.subtitle}>
+          Enter the verification code sent to
+        </Text>
+
+        <Text style={styles.email}>
+          {email}
+        </Text>
+
+        <View style={styles.form}>
+          <CustomInput
+            icon="key-outline"
+            placeholder="6-digit OTP"
+            keyboardType="number-pad"
+            value={otp}
+            onChangeText={setOtp}
+          />
+
+          <CustomButton
+            title="VERIFY & REGISTER"
+            onPress={handleVerifyOtp}
+          />
+        </View>
+      </View>
     </View>
   );
 }
@@ -64,28 +83,50 @@ export default function OtpScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: COLORS.background,
     justifyContent: "center",
-    padding: 20,
-    backgroundColor: "#F8FAFC",
+    paddingHorizontal: 20,
   },
 
-  title: {
-    fontSize: 30,
-    fontWeight: "bold",
+  card: {
+    backgroundColor: COLORS.card,
+    borderRadius: 24,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+
+  logo: {
+    fontSize: 56,
     textAlign: "center",
     marginBottom: 10,
   },
 
-  subtitle: {
+  title: {
+    fontSize: 30,
+    fontWeight: "800",
+    color: COLORS.text,
     textAlign: "center",
-    color: "#64748B",
-    marginBottom: 5,
+    letterSpacing: 1,
+  },
+
+  subtitle: {
+    color: COLORS.textSecondary,
+    textAlign: "center",
+    marginTop: 10,
+    fontSize: 15,
   },
 
   email: {
+    color: COLORS.primary,
     textAlign: "center",
-    fontWeight: "600",
     fontSize: 16,
-    marginBottom: 25,
+    fontWeight: "700",
+    marginTop: 8,
+    marginBottom: 28,
+  },
+
+  form: {
+    gap: 16,
   },
 });
