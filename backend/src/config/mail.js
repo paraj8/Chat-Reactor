@@ -8,13 +8,14 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-transporter.verify((error, success) => {
-  if (error) {
-    console.error("❌ SMTP Verify Failed");
-    console.error(error);
-  } else {
+(async () => {
+  try {
+    await transporter.verify();
     console.log("✅ SMTP Ready");
+  } catch (err) {
+    console.error("❌ SMTP Verify Failed");
+    console.error(err);
   }
-});
+})();
 
 module.exports = transporter;
