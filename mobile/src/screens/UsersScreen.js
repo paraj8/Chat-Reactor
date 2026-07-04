@@ -1,4 +1,3 @@
-import { removeToken, removeUser } from "../utils/storage";
 import { useEffect, useState } from "react";
 import {
   View,
@@ -7,9 +6,11 @@ import {
   FlatList,
   ActivityIndicator,
   TouchableOpacity,
+  SafeAreaView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
+import { removeToken, removeUser } from "../utils/storage";
 import {
   disconnectSocket,
   getSocket,
@@ -22,7 +23,6 @@ import { COLORS } from "../utils/constants";
 export default function UsersScreen({ navigation }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-
   const [onlineUsers, setOnlineUsers] = useState([]);
 
   const handleLogout = async () => {
@@ -33,25 +33,20 @@ export default function UsersScreen({ navigation }) {
       await removeUser();
 
       navigation.replace("Login");
-    } catch (error) {
-      console.log(error);
+    } catch (err) {
+      console.log(err);
     }
   };
 
   const fetchUsers = async () => {
     try {
       const res = await getUsers();
-
-      console.log("Users API Response:");
-      console.log(res.data);
-
       setUsers(res.data);
     } catch (err) {
       if (err.response) {
-        console.log("Status:", err.response.status);
-        console.log("Data:", err.response.data);
+        console.log(err.response.data);
       } else {
-        console.log("Message:", err.message);
+        console.log(err.message);
       }
     } finally {
       setLoading(false);
@@ -63,15 +58,16 @@ export default function UsersScreen({ navigation }) {
 
     const socket = getSocket();
 
-    if (socket) {
-      socket.on("onlineUsers", (users) => {
-        console.log("🟢 Online Users:", users);
-        setOnlineUsers(users);
-      });
-    }
+    if (!socket) return;
+
+    socket.off("onlineUsers");
+
+    socket.on("onlineUsers", (users) => {
+      setOnlineUsers(users);
+    });
 
     return () => {
-      socket?.off("onlineUsers");
+      socket.off("onlineUsers");
     };
   }, []);
 
@@ -87,18 +83,24 @@ export default function UsersScreen({ navigation }) {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Header */}
+
       <View style={styles.header}>
         <View>
-          <Text style={styles.greeting}>Welcome 👋</Text>
-          <Text style={styles.title}>Chats</Text>
+          <Text style={styles.greeting}>
+            Welcome 👋
+          </Text>
+
+          <Text style={styles.title}>
+            Chats
+          </Text>
         </View>
 
         <TouchableOpacity
           style={styles.logoutButton}
-          onPress={handleLogout}
           activeOpacity={0.8}
+          onPress={handleLogout}
         >
           <Ionicons
             name="log-out-outline"
@@ -117,6 +119,9 @@ export default function UsersScreen({ navigation }) {
           data={users}
           keyExtractor={(item) => item._id}
           showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingBottom: 20,
+          }}
           renderItem={({ item }) => (
             <UserCard
               user={item}
@@ -130,7 +135,7 @@ export default function UsersScreen({ navigation }) {
           )}
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -139,7 +144,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
     paddingHorizontal: 18,
-    paddingTop: 55,
+    paddingTop: 10,
   },
 
   loading: {

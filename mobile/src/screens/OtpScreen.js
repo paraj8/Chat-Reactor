@@ -5,7 +5,13 @@ import {
   StyleSheet,
   Alert,
   StatusBar,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import CustomInput from "../components/CustomInput";
 import CustomButton from "../components/CustomButton";
@@ -30,53 +36,72 @@ export default function OtpScreen({ navigation, route }) {
         otp,
       });
 
-      Alert.alert("Success", "Account created successfully!");
+      Alert.alert(
+        "Success",
+        "Account created successfully!"
+      );
 
       navigation.replace("Login");
     } catch (error) {
       Alert.alert(
         "Error",
-        error.response?.data?.message || "Registration failed"
+        error.response?.data?.message ||
+          "Registration failed"
       );
     }
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <StatusBar
         barStyle="light-content"
         backgroundColor={COLORS.background}
       />
 
-      <View style={styles.card}>
-        <Text style={styles.logo}>🔐</Text>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView
+            contentContainerStyle={styles.scroll}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.card}>
+              <Text style={styles.logo}>🔐</Text>
 
-        <Text style={styles.title}>Verify OTP</Text>
+              <Text style={styles.title}>
+                Verify OTP
+              </Text>
 
-        <Text style={styles.subtitle}>
-          Enter the verification code sent to
-        </Text>
+              <Text style={styles.subtitle}>
+                Enter the verification code sent to
+              </Text>
 
-        <Text style={styles.email}>
-          {email}
-        </Text>
+              <Text style={styles.email}>
+                {email}
+              </Text>
 
-        <View style={styles.form}>
-          <CustomInput
-            icon="key-outline"
-            placeholder="6-digit OTP"
-            keyboardType="number-pad"
-            value={otp}
-            onChangeText={setOtp}
-          />
+              <View style={styles.form}>
+                <CustomInput
+                  icon="key-outline"
+                  placeholder="6-digit OTP"
+                  keyboardType="number-pad"
+                  value={otp}
+                  onChangeText={setOtp}
+                />
 
-          <CustomButton
-            title="VERIFY & REGISTER"
-            onPress={handleVerifyOtp}
-          />
-        </View>
-      </View>
-    </View>
+                <CustomButton
+                  title="VERIFY & REGISTER"
+                  onPress={handleVerifyOtp}
+                />
+              </View>
+            </View>
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
@@ -84,8 +109,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
+  },
+
+  scroll: {
+    flexGrow: 1,
     justifyContent: "center",
     paddingHorizontal: 20,
+    paddingVertical: 30,
   },
 
   card: {

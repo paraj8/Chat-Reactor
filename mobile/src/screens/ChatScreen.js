@@ -6,6 +6,8 @@ import {
   FlatList,
   SafeAreaView,
   TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -45,8 +47,13 @@ export default function ChatScreen({ navigation, route }) {
     socket.on("receiveMessage", (newMessage) => {
       // Only add messages for this conversation
       if (
-        newMessage.sender === user._id ||
-        newMessage.receiver === user._id
+        currentUser &&
+        (
+          (newMessage.sender === currentUser.id &&
+            newMessage.receiver === user._id) ||
+          (newMessage.sender === user._id &&
+            newMessage.receiver === currentUser.id)
+        )
       ) {
         setMessages((prev) => [...prev, newMessage]);
 
@@ -104,46 +111,54 @@ export default function ChatScreen({ navigation, route }) {
     }
   };
 
-  return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
+return (
+  <SafeAreaView style={styles.container}>
+    {/* Header */}
+    <View style={styles.header}>
+      <TouchableOpacity onPress={() => navigation.goBack()}>
+        <Ionicons
+          name="arrow-back"
+          size={24}
+          color={COLORS.text}
+        />
+      </TouchableOpacity>
 
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons
-            name="arrow-back"
-            size={24}
-            color={COLORS.text}
-          />
-        </TouchableOpacity>
-
-        <View style={styles.avatar}>
-          <Ionicons
-            name="person"
-            size={22}
-            color="#fff"
-          />
-        </View>
-
-        <View style={{ flex: 1 }}>
-          <Text style={styles.name}>
-            {user.username}
-          </Text>
-
-          <Text style={styles.status}>
-            Online
-          </Text>
-        </View>
+      <View style={styles.avatar}>
+        <Ionicons
+          name="person"
+          size={22}
+          color="#fff"
+        />
       </View>
 
+      <View style={{ flex: 1 }}>
+        <Text style={styles.name}>
+          {user.username}
+        </Text>
+
+        <Text style={styles.status}>
+          Online
+        </Text>
+      </View>
+    </View>
+
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={0}
+    >
       <FlatList
         ref={flatListRef}
         data={messages}
         keyExtractor={(item) => item._id}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.messages}
+        keyboardShouldPersistTaps="handled"
+        onContentSizeChange={() =>
+          flatListRef.current?.scrollToEnd({
+            animated: true,
+          })
+        }
         renderItem={({ item }) => (
           <MessageBubble
             message={item}
@@ -160,51 +175,6 @@ export default function ChatScreen({ navigation, route }) {
         onChangeText={setText}
         onSend={handleSend}
       />
-    </SafeAreaView>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    backgroundColor: COLORS.card,
-  },
-
-  avatar: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: COLORS.primary,
-    justifyContent: "center",
-    alignItems: "center",
-    marginHorizontal: 14,
-  },
-
-  name: {
-    color: COLORS.text,
-    fontSize: 18,
-    fontWeight: "700",
-  },
-
-  status: {
-    color: COLORS.textSecondary,
-    fontSize: 13,
-    marginTop: 2,
-  },
-
-  messages: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 20,
-  },
-});
+    </KeyboardAvoidingView>
+  </SafeAreaView>
+)};

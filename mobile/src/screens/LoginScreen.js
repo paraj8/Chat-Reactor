@@ -6,119 +6,138 @@ import {
   Alert,
   TouchableOpacity,
   StatusBar,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import CustomInput from "../components/CustomInput";
 import CustomButton from "../components/CustomButton";
 import { login } from "../services/authService";
 import { connectSocket } from "../services/socketService";
-import {
-  saveToken,
-  saveUser,
-} from "../utils/storage";
+import { saveToken, saveUser } from "../utils/storage";
 import { COLORS } from "../utils/constants";
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-const handleLogin = async () => {
-  if (!email || !password) {
-    return Alert.alert("Error", "Please fill all fields.");
-  }
-
-  try {
-    const res = await login({
-      email,
-      password,
-    });
-
-    console.log("✅ Login Response:");
-    console.log(res.data);
-
-    await saveToken(res.data.token);
-    await saveUser(res.data.user);
-
-    // Connect Socket.IO
-    connectSocket(res.data.user.id);
-
-    Alert.alert("Success", "Login Successful!");
-
-    navigation.replace("Users");
-  } catch (error) {
-    console.log("❌ LOGIN ERROR");
-
-    if (error.response) {
-      console.log("Status:", error.response.status);
-      console.log("Response:", error.response.data);
-
-      Alert.alert(
-        "Error",
-        error.response.data.message || "Login failed"
-      );
-    } else if (error.request) {
-      console.log("Request:", error.request);
-
-      Alert.alert(
-        "Network Error",
-        "Could not connect to the server."
-      );
-    } else {
-      console.log("Message:", error.message);
-
-      Alert.alert("Error", error.message);
+  const handleLogin = async () => {
+    if (!email || !password) {
+      return Alert.alert("Error", "Please fill all fields.");
     }
-  }
-};
+
+    try {
+      const res = await login({
+        email,
+        password,
+      });
+
+      console.log("✅ Login Response:");
+      console.log(res.data);
+
+      await saveToken(res.data.token);
+      await saveUser(res.data.user);
+
+      connectSocket(res.data.user.id);
+
+      Alert.alert("Success", "Login Successful!");
+
+      navigation.replace("Users");
+    } catch (error) {
+      console.log("❌ LOGIN ERROR");
+
+      if (error.response) {
+        console.log("Status:", error.response.status);
+        console.log("Response:", error.response.data);
+
+        Alert.alert(
+          "Error",
+          error.response.data.message || "Login failed"
+        );
+      } else if (error.request) {
+        Alert.alert(
+          "Network Error",
+          "Could not connect to the server."
+        );
+      } else {
+        Alert.alert("Error", error.message);
+      }
+    }
+  };
+
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <StatusBar
         barStyle="light-content"
         backgroundColor={COLORS.background}
       />
 
-      <View style={styles.card}>
-        <Text style={styles.logo}>⚛</Text>
-
-        <Text style={styles.title}>Chat Reactor</Text>
-
-        <Text style={styles.subtitle}>
-          Welcome back, Reactor.
-        </Text>
-
-        <View style={styles.form}>
-          <CustomInput
-            icon="mail-outline"
-            placeholder="Email"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-          />
-
-          <CustomInput
-            icon="lock-closed-outline"
-            placeholder="Password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
-
-          <CustomButton
-            title="LOGIN"
-            onPress={handleLogin}
-          />
-
-          <TouchableOpacity
-            onPress={() => navigation.navigate("Register")}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView
+            contentContainerStyle={styles.scroll}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
           >
-            <Text style={styles.link}>
-              Don't have an account?
-              <Text style={styles.linkHighlight}> Register</Text>
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
+            <View style={styles.card}>
+              <Text style={styles.logo}>⚛</Text>
+
+              <Text style={styles.title}>
+                Chat Reactor
+              </Text>
+
+              <Text style={styles.subtitle}>
+                Welcome back, Reactor.
+              </Text>
+
+              <View style={styles.form}>
+                <CustomInput
+                  icon="mail-outline"
+                  placeholder="Email"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                />
+
+                <CustomInput
+                  icon="lock-closed-outline"
+                  placeholder="Password"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                />
+
+                <CustomButton
+                  title="LOGIN"
+                  onPress={handleLogin}
+                />
+
+                <TouchableOpacity
+                  onPress={() =>
+                    navigation.navigate("Register")
+                  }
+                >
+                  <Text style={styles.link}>
+                    Don't have an account?
+                    <Text style={styles.linkHighlight}>
+                      {" "}
+                      Register
+                    </Text>
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
@@ -126,8 +145,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
+  },
+
+  scroll: {
+    flexGrow: 1,
     justifyContent: "center",
     paddingHorizontal: 20,
+    paddingVertical: 30,
   },
 
   card: {

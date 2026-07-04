@@ -6,7 +6,13 @@ import {
   Alert,
   TouchableOpacity,
   StatusBar,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import CustomInput from "../components/CustomInput";
 import CustomButton from "../components/CustomButton";
@@ -44,59 +50,77 @@ export default function RegisterScreen({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <StatusBar
         barStyle="light-content"
         backgroundColor={COLORS.background}
       />
 
-      <View style={styles.card}>
-        <Text style={styles.logo}>⚛</Text>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView
+            contentContainerStyle={styles.scroll}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.card}>
+              <Text style={styles.logo}>⚛</Text>
 
-        <Text style={styles.title}>Chat Reactor</Text>
+              <Text style={styles.title}>
+                Chat Reactor
+              </Text>
 
-        <Text style={styles.subtitle}>
-          Join the reactor and start chatting.
-        </Text>
+              <Text style={styles.subtitle}>
+                Join the reactor and start chatting.
+              </Text>
 
-        <View style={styles.form}>
-          <CustomInput
-            placeholder="Username"
-            value={username}
-            onChangeText={setUsername}
-            autoCapitalize="none"
-          />
+              <View style={styles.form}>
+                <CustomInput
+                  placeholder="Username"
+                  value={username}
+                  onChangeText={setUsername}
+                  autoCapitalize="none"
+                />
 
-          <CustomInput
-            placeholder="Email"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-          />
+                <CustomInput
+                  placeholder="Email"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                />
 
-          <CustomInput
-            placeholder="Password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
+                <CustomInput
+                  placeholder="Password"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                />
 
-          <CustomButton
-            title="CREATE ACCOUNT"
-            onPress={handleSendOtp}
-          />
-        </View>
+                <CustomButton
+                  title="CREATE ACCOUNT"
+                  onPress={handleSendOtp}
+                />
+              </View>
 
-        <TouchableOpacity
-          onPress={() => navigation.navigate("Login")}
-        >
-          <Text style={styles.link}>
-            Already have an account?
-            <Text style={styles.linkHighlight}> Login</Text>
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+              <TouchableOpacity
+                onPress={() => navigation.navigate("Login")}
+              >
+                <Text style={styles.link}>
+                  Already have an account?
+                  <Text style={styles.linkHighlight}>
+                    {" "}
+                    Login
+                  </Text>
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
@@ -104,6 +128,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
+  },
+
+  scroll: {
+    flexGrow: 1,
     justifyContent: "center",
     padding: 22,
   },
