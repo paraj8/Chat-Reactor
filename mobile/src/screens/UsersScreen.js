@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   SafeAreaView,
+  RefreshControl,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -24,7 +25,9 @@ export default function UsersScreen({ navigation }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [onlineUsers, setOnlineUsers] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
 
+  // Handle user logout
   const handleLogout = async () => {
     try {
       disconnectSocket();
@@ -38,6 +41,16 @@ export default function UsersScreen({ navigation }) {
     }
   };
 
+  // Pull to refresh
+  const onRefresh = async () => {
+  setRefreshing(true);
+
+  await fetchUsers();
+
+  setRefreshing(false);
+};
+
+// Fetch users from the backend
   const fetchUsers = async () => {
     try {
       const res = await getUsers();
@@ -48,8 +61,10 @@ export default function UsersScreen({ navigation }) {
       } else {
         console.log(err.message);
       }
-    } finally {
-      setLoading(false);
+    } finally { 
+      if (loading) {
+        setLoading(false);
+      }
     }
   };
 
@@ -115,13 +130,22 @@ export default function UsersScreen({ navigation }) {
           No users found
         </Text>
       ) : (
-        <FlatList
+                <FlatList
           data={users}
           keyExtractor={(item) => item._id}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             paddingBottom: 20,
           }}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={COLORS.primary}
+              colors={[COLORS.primary]}
+              progressBackgroundColor={COLORS.card}
+            />
+          }
           renderItem={({ item }) => (
             <UserCard
               user={item}
