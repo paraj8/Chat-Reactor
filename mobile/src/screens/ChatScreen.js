@@ -32,44 +32,41 @@ export default function ChatScreen({ navigation, route }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [isOnline, setIsOnline] = useState(false);
 
-const flatListRef = useRef(null);
+  const flatListRef = useRef(null);
 
-useEffect(() => {
-  initialize();
-}, []);
+  useEffect(() => {
+    initialize();
+  }, []);
 
-useEffect(() => {
-  if (!currentUser) return;
+  useEffect(() => {
+    if (!currentUser) return;
 
-  const socket = getSocket();
+    const socket = getSocket();
 
-  if (!socket) return;
+    if (!socket) return;
 
-  socket.off("receiveMessage");
-  socket.off("messagesRead");
-  socket.off("onlineUsers");
-  socket.off("userOnline");
-  socket.off("userOffline");
+    const handleReceiveMessage = async (newMessage) => {
+      const isCurrentChat =
+        (newMessage.sender === currentUser.id &&
+          newMessage.receiver === user._id) ||
+        (newMessage.sender === user._id &&
+          newMessage.receiver === currentUser.id);
 
-  // Receive new message
-  socket.on("receiveMessage", async (newMessage) => {
-    if (
-      (newMessage.sender === currentUser.id &&
-        newMessage.receiver === user._id) ||
-      (newMessage.sender === user._id &&
-        newMessage.receiver === currentUser.id)
-    ) {
+      if (!isCurrentChat) return;
+
       setMessages((prev) => [...prev, newMessage]);
 
-      // If we receive a message while chat is open,
-      // mark it as read immediately.
       if (newMessage.sender === user._id) {
-        await markMessagesAsRead(user._id);
+        try {
+          await markMessagesAsRead(user._id);
 
-        socket.emit("messagesRead", {
-          senderId: user._id,
-          readerId: currentUser.id,
-        });
+          socket.emit("messagesRead", {
+            senderId: user._id,
+            readerId: currentUser.id,
+          });
+        } catch (err) {
+          console.log("Read error:", err.response?.data || err.message);
+        }
       }
 
       setTimeout(() => {
@@ -77,106 +74,110 @@ useEffect(() => {
           animated: true,
         });
       }, 100);
+    };
+
+    const handleMessagesRead = ({ readerId }) => {
+      if (readerId !== user._id) return;
+
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.sender === currentUser.id
+            ? {
+                ...msg,
+                isRead: true,
+              }
+            : msg
+        )
+      );
+    };
+
+    const handleOnlineUsers = (users) => {
+      setIsOnline(users.includes(user._id));
+    };
+
+    const handleUserOnline = (id) => {
+      if (id === user._id) {
+        setIsOnline(true);
+      }
+    };
+
+    const handleUserOffline = (id) => {
+      if (id === user._id) {
+        setIsOnline(false);
+      }
+    };
+
+    socket.on("receiveMessage", handleReceiveMessage);
+    socket.on("messagesRead", handleMessagesRead);
+    socket.on("onlineUsers", handleOnlineUsers);
+    socket.on("userOnline", handleUserOnline);
+    socket.on("userOffline", handleUserOffline);
+
+    return () => {
+      socket.off("receiveMessage", handleReceiveMessage);
+      socket.off("messagesRead", handleMessagesRead);
+      socket.off("onlineUsers", handleOnlineUsers);
+      socket.off("userOnline", handleUserOnline);
+      socket.off("userOffline", handleUserOffline);
+    };
+  }, [currentUser]);
+
+  const initialize = async () => {
+    try {
+      const me = await getUser();
+
+      if (!me) return;
+
+      setCurrentUser(me);
+
+      const res = await getMessages(user._id);
+
+      setMessages(res.data);
+
+      try {
+        await markMessagesAsRead(user._id);
+
+        const socket = getSocket();
+
+        if (socket) {
+          socket.emit("messagesRead", {
+            senderId: user._id,
+            readerId: me.id,
+          });
+        }
+      } catch (err) {
+        console.log("Read receipt:", err.response?.data || err.message);
+      }
+
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({
+          animated: false,
+        });
+      }, 100);
+    } catch (err) {
+      console.log("Initialize:", err.response?.data || err.message);
     }
-  });
-
-  // Sender receives read receipt
-  socket.on("messagesRead", ({ reader }) => {
-    if (reader !== user._id) return;
-
-    setMessages((prev) =>
-      prev.map((msg) =>
-        msg.sender === currentUser.id
-          ? {
-              ...msg,
-              isRead: true,
-            }
-          : msg
-      )
-    );
-  });
-
-  // Initial online users
-  socket.on("onlineUsers", (users) => {
-    setIsOnline(users.includes(user._id));
-  });
-
-  socket.on("userOnline", (id) => {
-    if (id === user._id) {
-      setIsOnline(true);
-    }
-  });
-
-  socket.on("userOffline", (id) => {
-    if (id === user._id) {
-      setIsOnline(false);
-    }
-  });
-
-  return () => {
-    socket.off("receiveMessage");
-    socket.off("messagesRead");
-    socket.off("onlineUsers");
-    socket.off("userOnline");
-    socket.off("userOffline");
   };
-}, [currentUser]);
 
-const initialize = async () => {
-  const me = await getUser();
+  const handleSend = async () => {
+    if (!text.trim()) return;
 
-  setCurrentUser(me);
+    try {
+      const res = await sendMessage(user._id, text);
 
-  await loadMessages();
+      setMessages((prev) => [...prev, res.data]);
 
-  // Mark unread messages as read
-  await markMessagesAsRead(user._id);
+      setText("");
 
-  const socket = getSocket();
-
-  if (socket) {
-    socket.emit("messagesRead", {
-      senderId: user._id,
-      readerId: me.id,
-    });
-  }
-};
-
-const loadMessages = async () => {
-  try {
-    const res = await getMessages(user._id);
-
-    setMessages(res.data);
-
-    setTimeout(() => {
-      flatListRef.current?.scrollToEnd({
-        animated: false,
-      });
-    }, 100);
-  } catch (err) {
-    console.log(err.response?.data);
-  }
-};
-
-const handleSend = async () => {
-  if (!text.trim()) return;
-
-  try {
-    const res = await sendMessage(user._id, text);
-
-    setMessages((prev) => [...prev, res.data]);
-
-    setText("");
-
-    setTimeout(() => {
-      flatListRef.current?.scrollToEnd({
-        animated: true,
-      });
-    }, 100);
-  } catch (err) {
-    console.log(err.response?.data);
-  }
-};
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({
+          animated: true,
+        });
+      }, 100);
+    } catch (err) {
+      console.log(err.response?.data || err.message);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -198,9 +199,7 @@ const handleSend = async () => {
         </View>
 
         <View style={{ flex: 1 }}>
-          <Text style={styles.name}>
-            {user.username}
-          </Text>
+          <Text style={styles.name}>{user.username}</Text>
 
           <Text style={styles.status}>
             {isOnline ? "Online" : "Offline"}
@@ -210,11 +209,7 @@ const handleSend = async () => {
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={
-          Platform.OS === "ios"
-            ? "padding"
-            : "height"
-        }
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <FlatList
           ref={flatListRef}
@@ -248,3 +243,48 @@ const handleSend = async () => {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    backgroundColor: COLORS.card,
+  },
+
+  avatar: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: COLORS.primary,
+    justifyContent: "center",
+    alignItems: "center",
+    marginHorizontal: 14,
+  },
+
+  name: {
+    color: COLORS.text,
+    fontSize: 18,
+    fontWeight: "700",
+  },
+
+  status: {
+    color: COLORS.textSecondary,
+    fontSize: 13,
+    marginTop: 2,
+  },
+
+  messages: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 20,
+  },
+});
