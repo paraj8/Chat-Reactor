@@ -4,7 +4,7 @@ const {
   getOnlineUsers,
 } = require("../services/socketService");
 
-// Get chat history
+// ================= GET CHAT HISTORY =================
 const getMessages = async (req, res) => {
   try {
     const senderId = req.user.id;
@@ -31,7 +31,7 @@ const getMessages = async (req, res) => {
   }
 };
 
-// Send a message
+// ================= SEND MESSAGE =================
 const sendMessage = async (req, res) => {
   try {
     const sender = req.user.id;
@@ -47,9 +47,10 @@ const sendMessage = async (req, res) => {
       sender,
       receiver,
       message,
+      isRead: false,
     });
 
-    // Emit message to receiver if online
+    // Emit message if receiver is online
     const io = getIO();
     const onlineUsers = getOnlineUsers();
 
@@ -72,7 +73,54 @@ const sendMessage = async (req, res) => {
   }
 };
 
+// ================= MARK AS READ =================
+const markMessagesAsRead = async (req, res) => {
+  try {
+    const receiver = req.user.id;
+    const sender = req.params.senderId;
+
+    await Message.updateMany(
+      {
+        sender,
+        receiver,
+        isRead: false,
+      },
+      {
+        $set: {
+          isRead: true,
+        },
+      }
+    );
+
+    // Notify sender if online
+    const io = getIO();
+    const onlineUsers = getOnlineUsers();
+
+    const senderSocketId = onlineUsers.get(sender);
+
+    if (senderSocketId) {
+      io.to(senderSocketId).emit(
+        "messagesRead",
+        {
+          reader: receiver,
+        }
+      );
+    }
+
+    res.status(200).json({
+      message: "Messages marked as read",
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
 module.exports = {
   getMessages,
   sendMessage,
+  markMessagesAsRead,
 };

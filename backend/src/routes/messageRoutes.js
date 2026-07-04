@@ -6,10 +6,28 @@ const authMiddleware = require("../middleware/authMiddleware");
 const {
   getMessages,
   sendMessage,
+  markMessagesAsRead,
 } = require("../controllers/messageController");
 
-router.get("/:receiverId", authMiddleware, getMessages);
+// Get chat history
+router.get(
+  "/:receiverId",
+  authMiddleware,
+  getMessages
+);
 
-router.post("/", authMiddleware, sendMessage);
+// Send message
+router.post(
+  "/",
+  authMiddleware,
+  sendMessage
+);
+
+// Mark messages as read
+router.put(
+  "/read/:senderId",
+  authMiddleware,
+  markMessagesAsRead
+);
 
 module.exports = router;

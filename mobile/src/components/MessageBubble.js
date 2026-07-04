@@ -50,9 +50,17 @@ export default function MessageBubble({
 
             {isMine && (
               <Ionicons
-                name="checkmark-done"
-                size={13}
-                color="rgba(255,255,255,0.75)"
+                name={
+                  message.isRead
+                    ? "checkmark-done"
+                    : "checkmark"
+                }
+                size={14}
+                color={
+                  message.isRead
+                    ? "#38BDF8"
+                    : "rgba(255,255,255,0.75)"
+                }
                 style={styles.check}
               />
             )}
@@ -105,9 +113,9 @@ const styles = StyleSheet.create({
 
   footer: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "flex-end",
-    marginTop: 3,
+    alignItems: "center",
+    marginTop: 4,
   },
 
   time: {
@@ -116,10 +124,10 @@ const styles = StyleSheet.create({
   },
 
   myTime: {
-    color: "rgba(255,255,255,0.7)",
+    color: "rgba(255,255,255,0.75)",
   },
 
   check: {
-    marginLeft: 3,
+    marginLeft: 4,
   },
 });
