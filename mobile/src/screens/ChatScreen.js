@@ -4,11 +4,16 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  SafeAreaView,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+
 import { Ionicons } from "@expo/vector-icons";
 
 import { COLORS } from "../utils/constants";
@@ -31,6 +36,8 @@ export default function ChatScreen({ navigation, route }) {
   const [text, setText] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
   const [isOnline, setIsOnline] = useState(false);
+
+  const insets = useSafeAreaInsets();
 
   const flatListRef = useRef(null);
 
@@ -180,7 +187,10 @@ export default function ChatScreen({ navigation, route }) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={styles.container}
+      edges={["top", "left", "right"]}
+    >
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons
@@ -209,7 +219,8 @@ export default function ChatScreen({ navigation, route }) {
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={0}
       >
         <FlatList
           ref={flatListRef}
@@ -217,7 +228,12 @@ export default function ChatScreen({ navigation, route }) {
           keyExtractor={(item) => item._id}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-          contentContainerStyle={styles.messages}
+          contentContainerStyle={[
+          styles.messages,
+          {
+            paddingBottom: 10 + insets.bottom,
+          },
+          ]}
           onContentSizeChange={() =>
             flatListRef.current?.scrollToEnd({
               animated: true,
@@ -283,8 +299,8 @@ const styles = StyleSheet.create({
   },
 
   messages: {
+    flexGrow: 1,
     paddingHorizontal: 16,
     paddingTop: 16,
-    paddingBottom: 20,
   },
 });

@@ -5,6 +5,7 @@ import {
   StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COLORS } from "../utils/constants";
 
 export default function ChatInput({
@@ -12,8 +13,17 @@ export default function ChatInput({
   onChangeText,
   onSend,
 }) {
+  const insets = useSafeAreaInsets();
+
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        {
+          paddingBottom: Math.max(insets.bottom, 12),
+        },
+      ]}
+    >
       <TextInput
         style={styles.input}
         placeholder="Type a message..."
@@ -21,11 +31,13 @@ export default function ChatInput({
         value={value}
         onChangeText={onChangeText}
         multiline
+        textAlignVertical="top"
       />
 
       <TouchableOpacity
         style={styles.button}
         onPress={onSend}
+        activeOpacity={0.8}
       >
         <Ionicons
           name="send"
@@ -41,7 +53,8 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "flex-end",
-    padding: 12,
+    paddingHorizontal: 12,
+    paddingTop: 12,
     backgroundColor: COLORS.surface,
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
@@ -49,20 +62,27 @@ const styles = StyleSheet.create({
 
   input: {
     flex: 1,
+    minHeight: 48,
+    maxHeight: 120,
+
     backgroundColor: COLORS.card,
     color: COLORS.text,
+
     borderRadius: 24,
+
     paddingHorizontal: 16,
     paddingVertical: 12,
-    maxHeight: 120,
   },
 
   button: {
     width: 48,
     height: 48,
     marginLeft: 10,
+
     borderRadius: 24,
+
     backgroundColor: COLORS.primary,
+
     justifyContent: "center",
     alignItems: "center",
   },

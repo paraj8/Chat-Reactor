@@ -16,13 +16,35 @@ export default function AppNavigator() {
         initialRouteName="Login"
         screenOptions={{
           headerShown: false,
+          contentStyle: {
+            backgroundColor: "#0F172A", // Same as COLORS.background
+          },
         }}
       >
-        <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="Register" component={RegisterScreen} />
-        <Stack.Screen name="OTP" component={OtpScreen} />
-        <Stack.Screen name="Users" component={UsersScreen} />
-        <Stack.Screen name="Chat" component={ChatScreen} />
+        <Stack.Screen
+          name="Login"
+          component={LoginScreen}
+        />
+
+        <Stack.Screen
+          name="Register"
+          component={RegisterScreen}
+        />
+
+        <Stack.Screen
+          name="OTP"
+          component={OtpScreen}
+        />
+
+        <Stack.Screen
+          name="Users"
+          component={UsersScreen}
+        />
+
+        <Stack.Screen
+          name="Chat"
+          component={ChatScreen}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
